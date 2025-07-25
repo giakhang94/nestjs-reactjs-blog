@@ -14,4 +14,8 @@ export class AuthService {
       throw new BadRequestException('Email and password not match');
     }
   }
+
+  async loginUser() {
+    return 1;
+  }
 }
