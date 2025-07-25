@@ -1,4 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { Response } from 'express';
+import { User } from 'src/users/user.entity';
 import { UsersService } from 'src/users/users.service';
 import { comparePw } from 'src/utils/hassPassword';
 
@@ -15,7 +17,7 @@ export class AuthService {
     }
   }
 
-  async loginUser() {
-    return 1;
+  async loginUser(user: User, response: Response) {
+    return user;
   }
 }
