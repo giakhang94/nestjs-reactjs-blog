@@ -2,14 +2,11 @@ version: '3.8'
 services:
   mysql:
     image: mysql:8.0
-    container_name: mysql-nest-blog
-    ports:
-      - $DB_PORT:3306
+    container_name: nestjs-blog-mysql
     volumes:
-      - mysql-blog:/var/lib/mysql
+      - nestjs-blog-mysql:/var/lib/
     environment:
       - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
-      - MYSQL_DATABASE=${DB_NAME}
 
 volumes:
-  mysql-blog:
+  nestjs-blog-mysql:
