@@ -30,4 +30,9 @@ export class AuthService {
     attachToken(this.configService.getOrThrow('JWT_EXP'), token, response);
     return user;
   }
+
+  async logoutUser(response: Response) {
+    attachToken(0, '', response);
+    return { message: 'logout successfully' };
+  }
 }

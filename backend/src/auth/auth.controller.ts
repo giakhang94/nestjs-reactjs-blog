@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   Post,
   Res,
   UseGuards,
@@ -16,26 +17,33 @@ import { GetCurrentUser } from './decorators/GetCurrentUser.decorator';
 import { User } from 'src/users/user.entity';
 import { HideResponsePassword } from 'src/interceptors/hide-password.interceptor';
 import { ResponseUserDto } from 'src/users/dtos/response-user.dto';
+import { JwtGuard } from './guards/Jwt.guard';
 
 @Controller('auth')
-@UseInterceptors(new HideResponsePassword(ResponseUserDto))
 export class AuthController {
   constructor(
     private authService: AuthService,
     private usersService: UsersService,
   ) {}
   @Post('register-user')
+  @UseInterceptors(new HideResponsePassword(ResponseUserDto))
   registerUser(@Body() body: CreateUserDto) {
     return this.usersService.createUser(body);
   }
 
   @Post('login')
+  @UseInterceptors(new HideResponsePassword(ResponseUserDto))
   @UseGuards(LocalGuard)
-  loginUser(
+  async loginUser(
     @Body() body: LoginUserDto,
     @GetCurrentUser() user: User,
     @Res({ passthrough: true }) response: Response,
   ) {
     return this.authService.loginUser(user, response);
+  }
+
+  @Get('logout')
+  async logoutUser(@Res({ passthrough: true }) response: Response) {
+    return this.authService.logoutUser(response);
   }
 }
