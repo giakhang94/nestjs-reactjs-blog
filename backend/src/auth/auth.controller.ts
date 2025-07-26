@@ -18,6 +18,7 @@ import { User } from 'src/users/user.entity';
 import { HideResponsePassword } from 'src/interceptors/hide-password.interceptor';
 import { ResponseUserDto } from 'src/users/dtos/response-user.dto';
 import { JwtGuard } from './guards/Jwt.guard';
+import { GetRefreshToken } from './decorators/get-refresh-token.decorator';
 
 @Controller('auth')
 export class AuthController {
@@ -45,5 +46,13 @@ export class AuthController {
   @Get('logout')
   async logoutUser(@Res({ passthrough: true }) response: Response) {
     return this.authService.logoutUser(response);
+  }
+
+  @Get('refresh-token')
+  async refreshToken(
+    @GetRefreshToken() token: string,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    return this.authService.refreshToken(token, response);
   }
 }
