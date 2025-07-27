@@ -1,34 +1,34 @@
-import {
-  Column,
-  CreateDateColumn,
-  Entity,
-  PrimaryGeneratedColumn,
-  UpdateDateColumn,
-} from 'typeorm';
+// import {
+//   Column,
+//   CreateDateColumn,
+//   Entity,
+//   PrimaryGeneratedColumn,
+//   UpdateDateColumn,
+// } from 'typeorm';
 
-@Entity()
-export class User {
-  @PrimaryGeneratedColumn()
-  id: number;
+// @Entity()
+// export class User {
+//   @PrimaryGeneratedColumn()
+//   id: number;
 
-  @Column()
-  email: string;
+//   @Column()
+//   email: string;
 
-  @Column()
-  password: string;
+//   @Column()
+//   password: string;
 
-  @Column()
-  firstName: string;
+//   @Column()
+//   firstName: string;
 
-  @Column()
-  lastName: string;
+//   @Column()
+//   lastName: string;
 
-  @Column()
-  displayName: string;
+//   @Column()
+//   displayName: string;
 
-  @CreateDateColumn({ type: 'timestamp' })
-  createdAt: Date;
+//   @CreateDateColumn({ type: 'timestamp' })
+//   createdAt: Date;
 
-  @UpdateDateColumn({ type: 'timestamp' })
-  updatedAt: Date;
-}
+//   @UpdateDateColumn({ type: 'timestamp' })
+//   updatedAt: Date;
+// }

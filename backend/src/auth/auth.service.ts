@@ -5,11 +5,11 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Response } from 'express';
-import { User } from 'src/users/user.entity';
 import { UsersService } from 'src/users/users.service';
 import { comparePw } from 'src/utils/hassPassword';
 import { attachToken } from './helpers/attach-token';
 import { ConfigService } from '@nestjs/config';
+import { User } from 'generated/prisma';
 
 @Injectable()
 export class AuthService {
