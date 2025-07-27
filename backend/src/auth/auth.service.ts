@@ -54,6 +54,7 @@ export class AuthService {
 
   async logoutUser(response: Response) {
     attachToken('authentication', 0, '', response);
+    attachToken('refresh', 0, '', response);
     return { message: 'logout successfully' };
   }
 
