@@ -29,7 +29,7 @@ export class AuthService {
   }
 
   async loginUser(user: User, response: Response) {
-    const payload = { userId: user.id };
+    const payload = { userId: user.id, role: user.role };
     const token = this.jwt.sign(payload);
     const refreshToken = this.jwt.sign(payload, {
       expiresIn:
@@ -54,6 +54,7 @@ export class AuthService {
 
   async logoutUser(response: Response) {
     attachToken('authentication', 0, '', response);
+    attachToken('refresh', 0, '', response);
     return { message: 'logout successfully' };
   }
 
@@ -68,7 +69,10 @@ export class AuthService {
       console.log('refresh token expired');
       throw new UnauthorizedException('Please login to continue');
     }
-    const newAccessToken = this.jwt.sign({ userId: payload.userId });
+    const newAccessToken = this.jwt.sign({
+      userId: payload.userId,
+      role: payload.role,
+    });
     attachToken(
       'authentication',
       this.configService.getOrThrow('JWT_EXP'),
