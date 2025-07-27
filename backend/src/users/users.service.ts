@@ -3,22 +3,20 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { User } from './user.entity';
-import { Repository } from 'typeorm';
+
 import { CreateUserDto } from './dtos/create-user.dto';
 import { hashPw } from 'src/utils/hassPassword';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class UsersService {
-  constructor(@InjectRepository(User) private usersRepo: Repository<User>) {}
+  constructor(private prisma: PrismaService) {}
   async createUser(body: CreateUserDto) {
     if (!body.displayName) {
       body.displayName = body.firstName + ' ' + body.lastName;
     }
     body.password = await hashPw(body.password, 8);
-    const user = this.usersRepo.create(body);
-    await this.usersRepo.save(user);
+    const user = await this.prisma.user.create({ data: body });
     return user;
   }
 
@@ -26,7 +24,7 @@ export class UsersService {
     if (!id) {
       throw new BadRequestException('please provide user id');
     }
-    const user = await this.usersRepo.findOneBy({ id });
+    const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) {
       throw new NotFoundException('user not found');
     }
@@ -37,7 +35,7 @@ export class UsersService {
     if (!email) {
       throw new BadRequestException('please provide user id');
     }
-    const user = await this.usersRepo.findOneBy({ email });
+    const user = await this.prisma.user.findUnique({ where: { email } });
     if (!user) {
       throw new NotFoundException('user not found');
     }

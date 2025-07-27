@@ -14,11 +14,12 @@ import { LoginUserDto } from './dtos/login-user.dto';
 import { LocalGuard } from './guards/Local.guard';
 import { Response } from 'express';
 import { GetCurrentUser } from './decorators/GetCurrentUser.decorator';
-import { User } from 'src/users/user.entity';
+
 import { HideResponsePassword } from 'src/interceptors/hide-password.interceptor';
 import { ResponseUserDto } from 'src/users/dtos/response-user.dto';
 import { JwtGuard } from './guards/Jwt.guard';
 import { GetRefreshToken } from './decorators/get-refresh-token.decorator';
+import { User } from 'generated/prisma';
 
 @Controller('auth')
 export class AuthController {
