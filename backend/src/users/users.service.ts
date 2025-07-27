@@ -11,6 +11,9 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { User } from 'generated/prisma';
 import { UpdateUserDto } from './dtos/update-user.dto';
 import { UserPayload } from 'src/types';
+import { checkValidId } from './helpers/checkValidId';
+import { checkPermission } from './helpers/checkPermission';
+import { checkExistingUser } from './helpers/checkExistingUser';
 
 @Injectable()
 export class UsersService {
@@ -54,18 +57,19 @@ export class UsersService {
   }
 
   async updateUser(user: UserPayload, _id: string, body: UpdateUserDto) {
-    if (!Number(_id)) throw new BadRequestException('id must be a number!');
-    const id = Number(_id);
-    if (user.userId !== id && user.role !== 'admin') {
-      throw new ForbiddenException("You can not update other user's data");
-    }
-    const checkUser = await this.prisma.user.findUnique({ where: { id } });
-    if (!checkUser) {
-      throw new NotFoundException('User not found');
-    }
+    const id = checkValidId(_id);
+    await checkPermission(user, id, "you can not edit other user's data");
+    await checkExistingUser(this.prisma, id);
     if (Object.keys(body).length === 0) {
       throw new BadRequestException('Nothing to update');
     }
     return this.prisma.user.update({ where: { id }, data: body });
+  }
+
+  async deleteUser(user: UserPayload, _id: string) {
+    const id = checkValidId(_id);
+    checkPermission(user, id, 'You can not delete other user');
+    await checkExistingUser(this.prisma, id);
+    return this.prisma.user.delete({ where: { id } });
   }
 }
