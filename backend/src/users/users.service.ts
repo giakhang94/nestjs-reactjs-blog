@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -7,6 +8,7 @@ import {
 import { CreateUserDto } from './dtos/create-user.dto';
 import { hashPw } from 'src/utils/hassPassword';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { User } from 'generated/prisma';
 
 @Injectable()
 export class UsersService {
@@ -40,5 +42,11 @@ export class UsersService {
       throw new NotFoundException('user not found');
     }
     return user;
+  }
+
+  async getAllUsers(user: User) {
+    if (user.role !== 'admin')
+      throw new ForbiddenException('Only admin can view all users');
+    return this.prisma.user.findMany();
   }
 }

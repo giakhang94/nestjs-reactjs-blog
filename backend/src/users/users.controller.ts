@@ -12,4 +12,10 @@ export class UsersController {
   async getMe(@GetCurrentUser() user: Partial<User>) {
     return user;
   }
+
+  @Get('all')
+  @UseGuards(JwtGuard)
+  getAllUser(@GetCurrentUser() user: User) {
+    return this.usersService.getAllUsers(user);
+  }
 }
