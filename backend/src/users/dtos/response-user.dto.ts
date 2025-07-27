@@ -1,4 +1,5 @@
 import { Exclude, Expose } from 'class-transformer';
+import { Role } from 'src/types';
 
 export class ResponseUserDto {
   @Expose()
@@ -12,6 +13,9 @@ export class ResponseUserDto {
 
   @Expose()
   displayName: string;
+
+  @Expose()
+  role: Role;
 
   @Exclude()
   password: string;
