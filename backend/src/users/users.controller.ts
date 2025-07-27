@@ -5,6 +5,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
@@ -16,6 +17,7 @@ import { HideResponsePassword } from 'src/interceptors/hide-password.interceptor
 import { ResponseUserDto } from './dtos/response-user.dto';
 import { UserPayload } from 'src/types';
 import { UpdateUserDto } from './dtos/update-user.dto';
+import { ResponseAllUsersDto } from './dtos/all-users.dto';
 
 @Controller('users')
 export class UsersController {
@@ -27,10 +29,18 @@ export class UsersController {
   }
 
   @Get('all')
-  @UseInterceptors(new HideResponsePassword(ResponseUserDto))
+  @UseInterceptors(new HideResponsePassword(ResponseAllUsersDto))
   @UseGuards(JwtGuard)
-  getAllUser(@GetCurrentUser() user: User) {
-    return this.usersService.getAllUsers(user);
+  getAllUser(
+    @GetCurrentUser() user: UserPayload,
+    @Query('page') page: string,
+    @Query('limit') limit: string,
+  ) {
+    return this.usersService.getAllUsers(
+      user,
+      Number(limit) || 1,
+      Number(page) || 1,
+    );
   }
 
   @Patch('update/:id')

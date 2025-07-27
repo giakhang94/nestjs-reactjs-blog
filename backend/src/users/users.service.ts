@@ -14,6 +14,7 @@ import { UserPayload } from 'src/types';
 import { checkValidId } from './helpers/checkValidId';
 import { checkPermission } from './helpers/checkPermission';
 import { checkExistingUser } from './helpers/checkExistingUser';
+import { skip } from 'node:test';
 
 @Injectable()
 export class UsersService {
@@ -49,16 +50,22 @@ export class UsersService {
     return user;
   }
 
-  async getAllUsers(user: User) {
-    console.log(user);
+  async getAllUsers(user: UserPayload, limit: number = 1, page: number = 1) {
     if (user.role !== 'admin')
       throw new ForbiddenException('Only admin can view all users');
-    return this.prisma.user.findMany();
+
+    const skip = (page - 1) * limit;
+
+    const result = await this.prisma.user.findMany({ take: limit, skip });
+    const count = await this.prisma.user.count();
+    const totalPages = Math.ceil(count / limit);
+
+    return { result, totalPages };
   }
 
   async updateUser(user: UserPayload, _id: string, body: UpdateUserDto) {
     const id = checkValidId(_id);
-    await checkPermission(user, id, "you can not edit other user's data");
+    checkPermission(user, id, "you can not edit other user's data");
     await checkExistingUser(this.prisma, id);
     if (Object.keys(body).length === 0) {
       throw new BadRequestException('Nothing to update');
