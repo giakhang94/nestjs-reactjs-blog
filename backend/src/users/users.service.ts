@@ -8,7 +8,7 @@ import {
 import { CreateUserDto } from './dtos/create-user.dto';
 import { hashPw } from 'src/utils/hassPassword';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { User } from 'generated/prisma';
+import { Role, User } from 'generated/prisma';
 import { UpdateUserDto } from './dtos/update-user.dto';
 import { UserPayload } from 'src/types';
 import { checkValidId } from './helpers/checkValidId';
@@ -50,13 +50,26 @@ export class UsersService {
     return user;
   }
 
-  async getAllUsers(user: UserPayload, limit: number = 1, page: number = 1) {
+  async getAllUsers(
+    user: UserPayload,
+    limit: number,
+    page: number,
+    search: string,
+    filter: Role,
+  ) {
     if (user.role !== 'admin')
       throw new ForbiddenException('Only admin can view all users');
 
+    if (!Object.values(Role).includes(filter))
+      throw new BadRequestException('Role must be admin or author');
+
     const skip = (page - 1) * limit;
 
-    const result = await this.prisma.user.findMany({ take: limit, skip });
+    const result = await this.prisma.user.findMany({
+      take: limit,
+      skip,
+      where: { displayName: { search }, role: filter },
+    });
     const count = await this.prisma.user.count();
     const totalPages = Math.ceil(count / limit);
 
