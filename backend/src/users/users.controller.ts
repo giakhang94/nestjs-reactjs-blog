@@ -34,12 +34,16 @@ export class UsersController {
   getAllUser(
     @GetCurrentUser() user: UserPayload,
     @Query('page') page: string,
+    @Query('search') search: string,
+    @Query('filter') filter: string,
     @Query('limit') limit: string,
   ) {
     return this.usersService.getAllUsers(
       user,
       Number(limit) || 1,
       Number(page) || 1,
+      search,
+      filter,
     );
   }
 

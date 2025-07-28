@@ -50,13 +50,23 @@ export class UsersService {
     return user;
   }
 
-  async getAllUsers(user: UserPayload, limit: number = 1, page: number = 1) {
+  async getAllUsers(
+    user: UserPayload,
+    limit: number,
+    page: number,
+    search: string,
+    filter: string,
+  ) {
     if (user.role !== 'admin')
       throw new ForbiddenException('Only admin can view all users');
 
     const skip = (page - 1) * limit;
 
-    const result = await this.prisma.user.findMany({ take: limit, skip });
+    const result = await this.prisma.user.findMany({
+      take: limit,
+      skip,
+      where: { displayName: { search } },
+    });
     const count = await this.prisma.user.count();
     const totalPages = Math.ceil(count / limit);
 
