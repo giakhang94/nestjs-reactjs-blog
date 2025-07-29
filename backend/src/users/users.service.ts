@@ -20,12 +20,15 @@ import { skip } from 'node:test';
 export class UsersService {
   constructor(private prisma: PrismaService) {}
   async createUser(body: CreateUserDto) {
+    const user = await this.prisma.user.findUnique({
+      where: { email: body.email },
+    });
+    if (user) throw new BadRequestException('Email has been already used');
     if (!body.displayName) {
       body.displayName = body.firstName + ' ' + body.lastName;
     }
     body.password = await hashPw(body.password, 8);
-    const user = await this.prisma.user.create({ data: body });
-    return user;
+    return this.prisma.user.create({ data: body });
   }
 
   async findUserById(id: number) {
@@ -89,6 +92,8 @@ export class UsersService {
   async deleteUser(user: UserPayload, _id: string) {
     const id = checkValidId(_id);
     checkPermission(user, id, 'You can not delete other user');
+    const checkUser = await this.prisma.user.findUnique({ where: { id } });
+    if (!checkUser) throw new NotFoundException('user not found');
     await checkExistingUser(this.prisma, id);
     return this.prisma.user.delete({ where: { id } });
   }
