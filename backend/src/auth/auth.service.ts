@@ -79,5 +79,7 @@ export class AuthService {
       newAccessToken,
       response,
     );
+
+    return { message: 'access-token refreshed' };
   }
 }
