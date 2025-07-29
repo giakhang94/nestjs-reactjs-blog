@@ -92,6 +92,8 @@ export class UsersService {
   async deleteUser(user: UserPayload, _id: string) {
     const id = checkValidId(_id);
     checkPermission(user, id, 'You can not delete other user');
+    const checkUser = await this.prisma.user.findUnique({ where: { id } });
+    if (!checkUser) throw new NotFoundException('user not found');
     await checkExistingUser(this.prisma, id);
     return this.prisma.user.delete({ where: { id } });
   }

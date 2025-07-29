@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -19,10 +20,12 @@ import { UserPayload } from 'src/types';
 import { UpdateUserDto } from './dtos/update-user.dto';
 import { ResponseAllUsersDto } from './dtos/all-users.dto';
 import {
+  ApiBadRequestResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
   ApiParam,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 
 @Controller('users')
@@ -131,5 +134,42 @@ export class UsersController {
     @Param('id') id: string,
   ) {
     return this.usersService.updateUser(user, id, body);
+  }
+
+  @Delete(':id')
+  @UseGuards(JwtGuard)
+  @ApiOperation({ description: 'delete user by id' })
+  @ApiParam({ name: 'id', required: true, description: 'user id', example: 5 })
+  @ApiOkResponse({
+    description: 'user deleted',
+    example: { message: 'user deleted' },
+  })
+  @ApiBadRequestResponse({
+    description: 'when provided id is not a number or cant convert to number',
+    example: {
+      message: 'id must be a number',
+      error: 'Unauthorized',
+      status: 400,
+    },
+  })
+  @ApiUnauthorizedResponse({
+    description:
+      'only user can delete their own account. Admin can delete all accounts',
+    example: {
+      message: 'you can not delete other user',
+      error: 'Forbidden',
+      status: 403,
+    },
+  })
+  @ApiNotFoundResponse({
+    description: 'when user with the provided id do not exist',
+    example: {
+      message: 'user not found',
+      error: 'NotFound',
+      status: 4040,
+    },
+  })
+  deleteUser(@Param('id') id: string, @GetCurrentUser() user: UserPayload) {
+    return this.usersService.deleteUser(user, id);
   }
 }
