@@ -7,6 +7,10 @@ import { AuthModule } from './auth/auth.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { AvatarModule } from './avatar/avatar.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
+import { PostModule } from './post/post.module';
+import { TagModule } from './tag/tag.module';
+import { CategoryModule } from './category/category.module';
+import { ThumbnailModule } from './thumbnail/thumbnail.module';
 
 @Module({
   imports: [
@@ -16,6 +20,10 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module';
     PrismaModule,
     AvatarModule,
     CloudinaryModule,
+    PostModule,
+    TagModule,
+    CategoryModule,
+    ThumbnailModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -9,6 +9,13 @@ export enum Role_filter {
   all = 'all',
 }
 
+export enum Status {
+  published,
+  draft,
+  editing,
+  deleted,
+}
+
 export type UserPayload = {
   userId: number;
   iat: number;
