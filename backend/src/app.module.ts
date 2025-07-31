@@ -5,6 +5,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { AvatarModule } from './avatar/avatar.module';
+import { CloudinaryModule } from './cloudinary/cloudinary.module';
 
 @Module({
   imports: [
@@ -12,6 +14,8 @@ import { PrismaModule } from './prisma/prisma.module';
     UsersModule,
     AuthModule,
     PrismaModule,
+    AvatarModule,
+    CloudinaryModule,
   ],
   controllers: [AppController],
   providers: [AppService],

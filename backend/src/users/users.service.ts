@@ -72,6 +72,7 @@ export class UsersService {
       take: limit,
       skip,
       where: { displayName: { search }, role: filter },
+      include: { avatar: true },
     });
     const count = await this.prisma.user.count();
     const totalPages = Math.ceil(count / limit);

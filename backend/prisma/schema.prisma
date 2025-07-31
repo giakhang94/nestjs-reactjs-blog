@@ -28,5 +28,15 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now())
 
+  avatar Avatar? 
   @@fulltext([displayName])
 }
+
+model Avatar {
+  id Int @id @default(autoincrement())
+  url String
+  public_id String
+  user User @relation(fields: [userId], references: [id])
+  userId Int @unique
+}
+
