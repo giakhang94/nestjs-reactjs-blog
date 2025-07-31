@@ -13,10 +13,10 @@ import {
 import { UsersService } from './users.service';
 import { GetCurrentUser } from 'src/auth/decorators/GetCurrentUser.decorator';
 import { JwtGuard } from 'src/auth/guards/Jwt.guard';
-import { Role, User } from 'generated/prisma';
+import { User } from 'generated/prisma';
 import { HideResponsePassword } from 'src/interceptors/hide-password.interceptor';
 import { ResponseUserDto } from './dtos/response-user.dto';
-import { UserPayload } from 'src/types';
+import { Role_filter, UserPayload } from 'src/types';
 import { UpdateUserDto } from './dtos/update-user.dto';
 import { ResponseAllUsersDto } from './dtos/all-users.dto';
 import {
@@ -85,7 +85,7 @@ export class UsersController {
     @GetCurrentUser() user: UserPayload,
     @Query('page') page: string,
     @Query('search') search: string,
-    @Query('filter') filter: Role,
+    @Query('filter') filter: Role_filter,
     @Query('limit') limit: string,
   ) {
     return this.usersService.getAllUsers(
