@@ -10,11 +10,10 @@ import { hashPw } from 'src/utils/hassPassword';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Role, User } from 'generated/prisma';
 import { UpdateUserDto } from './dtos/update-user.dto';
-import { UserPayload } from 'src/types';
+import { Role_filter, UserPayload } from 'src/types';
 import { checkValidId } from './helpers/checkValidId';
 import { checkPermission } from './helpers/checkPermission';
 import { checkExistingUser } from './helpers/checkExistingUser';
-import { skip } from 'node:test';
 
 @Injectable()
 export class UsersService {
@@ -58,20 +57,27 @@ export class UsersService {
     limit: number,
     page: number,
     search: string,
-    filter: Role,
+    filter: Role_filter,
   ) {
     if (user.role !== 'admin')
       throw new ForbiddenException('Only admin can view all users');
 
-    if (!Object.values(Role).includes(filter))
+    if (filter !== 'admin' && !Object.values(Role_filter).includes(filter))
       throw new BadRequestException('Role must be admin or author');
 
     const skip = (page - 1) * limit;
 
+    const whereObject = {
+      displayName: { search },
+    };
+    if (filter !== 'all') {
+      whereObject['role'] = filter;
+    }
+
     const result = await this.prisma.user.findMany({
       take: limit,
       skip,
-      where: { displayName: { search }, role: filter },
+      where: whereObject,
       include: { avatar: true },
     });
     const count = await this.prisma.user.count();
