@@ -84,6 +84,8 @@ model Category {
   id Int @id @default(autoincrement())
   category String @unique
   posts Post[]
+
+  @@fulltext([category])
 }
 
 //Comment model is a particular modal that has it's own id field. 
