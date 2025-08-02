@@ -12,6 +12,7 @@ import { GetCurrentUser } from 'src/auth/decorators/GetCurrentUser.decorator';
 import { UserPayload } from 'src/types';
 import { JwtGuard } from 'src/auth/guards/Jwt.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { ImageValidationPipe } from 'src/pipes/image-validation.pipe';
 
 @Controller('post')
 export class PostController {
@@ -23,7 +24,7 @@ export class PostController {
   createPost(
     @Body() body: CreatePostDto,
     @GetCurrentUser() user: UserPayload,
-    @UploadedFile() file: Express.Multer.File,
+    @UploadedFile(new ImageValidationPipe()) file: Express.Multer.File,
   ) {
     return this.postService.createPost(body, user, file);
   }
