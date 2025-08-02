@@ -1,6 +1,8 @@
 import {
   Body,
   Controller,
+  Delete,
+  Param,
   Post,
   UploadedFile,
   UseGuards,
