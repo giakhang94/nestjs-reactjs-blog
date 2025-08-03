@@ -4,6 +4,8 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { UserPayload } from 'src/types';
 import { CreatePostDto } from './dtos/create-post.dto';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
+import slugify from 'slugify';
+import { createUniqueSlug } from './helpers/create-unique-slug';
 
 @Injectable()
 export class PostService {
@@ -18,6 +20,11 @@ export class PostService {
     file: Express.Multer.File,
   ) {
     const { content, title, preview_text, status, category, tags } = body;
+
+    const slug = body.slug
+      ? body.slug
+      : await createUniqueSlug(title, this.prisma);
+
     const data = {
       content,
       title,
@@ -25,6 +32,7 @@ export class PostService {
       user: { connect: { id: user.userId } },
       status,
       tags,
+      slug,
     };
     const uploadedImage = await this.cloudinary.uploadFile(file);
     const categoryQuery = {
@@ -66,7 +74,8 @@ export class PostService {
       return newPost;
     } catch (error) {
       this.cloudinary.deleteFile(uploadedImage.public_id);
-      throw new BadRequestException('Cannot create post');
+      console.log(error);
+      throw new BadRequestException('can not create post');
     }
   }
 }
