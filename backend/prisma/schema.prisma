@@ -54,6 +54,7 @@ model Post {
   preview_text String
   user User @relation(fields: [userId], references: [id])
   userId Int
+  slug String? @unique
   content String
   status Status
   updatedAt DateTime @updatedAt
