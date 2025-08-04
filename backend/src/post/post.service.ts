@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -140,5 +141,13 @@ export class PostService {
     const post = await this.prisma.post.findUnique({ where: { slug } });
     if (!post) throw new NotFoundException('post not found');
     return post;
+  }
+
+  async deletePost(slug: string, user: UserPayload) {
+    const post = await this.prisma.post.findUnique({ where: { slug } });
+    if (!post) throw new NotFoundException('post not found');
+    if (post.userId !== user.userId && user.role !== 'admin')
+      throw new ForbiddenException('You can not delete this post');
+    return this.prisma.post.delete({ where: { slug } });
   }
 }

@@ -46,4 +46,10 @@ export class PostController {
   getPostBySlug(@Param('slug') slug: string) {
     return this.postService.getPostBySlug(slug);
   }
+
+  @Delete('delete/:slug')
+  @UseGuards(JwtGuard)
+  DeletePost(@Param('slug') slug: string, @GetCurrentUser() user: UserPayload) {
+    return this.postService.deletePost(slug, user);
+  }
 }
