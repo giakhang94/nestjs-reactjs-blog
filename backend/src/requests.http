@@ -1,4 +1,6 @@
-#Get all post
-Get http://localhost:3000/post/all-post?tag=tag5
+###Get all post
+Get http://localhost:3000/post/all-post
+# ?tag=tag1&categoryId=1&&search=concac
 
-
+### et post by slug
+GET http://localhost:3000/post/test-post-1
