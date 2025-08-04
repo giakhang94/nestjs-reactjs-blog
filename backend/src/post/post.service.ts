@@ -80,7 +80,7 @@ export class PostService {
     }
   }
 
-  async getAllPosts(search: string, categoryId: number) {
+  async getAllPosts(search: string, categoryId: number, tag: string) {
     const where = {};
     if (search) {
       where['OR'] = [
@@ -90,18 +90,18 @@ export class PostService {
           },
         },
         { title: { search } },
-        {
-          tags: {
-            some: {
-              tag: {
-                tag: {
-                  contains: search,
-                },
-              },
+      ];
+    }
+    if (tag) {
+      where['tags'] = {
+        some: {
+          tag: {
+            tag: {
+              equals: tag,
             },
           },
         },
-      ];
+      };
     }
     if (categoryId) {
       where['cateId'] = categoryId;
@@ -131,4 +131,6 @@ export class PostService {
     // )
     // `;
   }
+
+  async getPostsByTag(tag: string) {}
 }

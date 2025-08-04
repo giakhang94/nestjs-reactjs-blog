@@ -37,7 +37,13 @@ export class PostController {
   getAllPosts(
     @Query('search') search: string,
     @Query('categoryId') categoryId: string,
+    @Query('tag') tag: string,
   ) {
-    return this.postService.getAllPosts(search, Number(categoryId));
+    return this.postService.getAllPosts(search, Number(categoryId), tag);
+  }
+
+  @Get(':slug')
+  getPostBySlug(@Param('slug') slug: string) {
+    return this.postService.getPostBySlug(slug);
   }
 }

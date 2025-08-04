@@ -1,6 +1,4 @@
 #Get all post
-Get http://localhost:3000/post/all-post?categoryId=1&search=
+Get http://localhost:3000/post/all-post?tag=tag5
 
-#get all post without search/filter
 
-Get http://localhost:3000/post/all-post
