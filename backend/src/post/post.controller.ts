@@ -2,8 +2,10 @@ import {
   Body,
   Controller,
   Delete,
+  Get,
   Param,
   Post,
+  Query,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -29,5 +31,13 @@ export class PostController {
     @UploadedFile(new ImageValidationPipe()) file: Express.Multer.File,
   ) {
     return this.postService.createPost(body, user, file);
+  }
+
+  @Get('all-post')
+  getAllPosts(
+    @Query('search') search: string,
+    @Query('categoryId') categoryId: string,
+  ) {
+    return this.postService.getAllPosts(search, Number(categoryId));
   }
 }

@@ -65,6 +65,9 @@ model Post {
   thumbnail Thumbnail? 
   tags TagsOnPosts[]
   comment Comment[]
+
+  @@fulltext([content, title])
+  
 }
 
 model Thumbnail {

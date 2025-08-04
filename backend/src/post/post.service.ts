@@ -6,6 +6,7 @@ import { CreatePostDto } from './dtos/create-post.dto';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 import slugify from 'slugify';
 import { createUniqueSlug } from './helpers/create-unique-slug';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class PostService {
@@ -77,5 +78,57 @@ export class PostService {
       console.log(error);
       throw new BadRequestException('can not create post');
     }
+  }
+
+  async getAllPosts(search: string, categoryId: number) {
+    const where = {};
+    if (search) {
+      where['OR'] = [
+        {
+          content: {
+            search,
+          },
+        },
+        { title: { search } },
+        {
+          tags: {
+            some: {
+              tag: {
+                tag: {
+                  contains: search,
+                },
+              },
+            },
+          },
+        },
+      ];
+    }
+    if (categoryId) {
+      where['cateId'] = categoryId;
+    }
+
+    return this.prisma.post.findMany({
+      include: { tags: true },
+      where,
+    });
+
+    // return this.prisma.$queryRaw`
+    // select * from Post
+    // left join TagsOnPosts on Post.id = TagsOnPosts.postId
+    // left join Tag on TagsOnPosts.tagId = Tag.id
+    // where (
+    //   ${
+    //     search === null || !search
+    //       ? `1=1`
+    //       : `(Post.title LIKE concat('%', :search, '%'))
+    //   OR (Post.content LIKE concat('%', :search, '%'))
+    //   OR (Post.tag LIKE concat('%', :search, '%'))
+    //   `
+    //   }
+    // )
+    // And (
+    //   ${categoryId === null || !categoryId ? `1=1` : `Post.cateId = ${categoryId}`}
+    // )
+    // `;
   }
 }

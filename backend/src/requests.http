@@ -1,0 +1,6 @@
+#Get all post
+Get http://localhost:3000/post/all-post?categoryId=1&search=
+
+#get all post without search/filter
+
+Get http://localhost:3000/post/all-post
