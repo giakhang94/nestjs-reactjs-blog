@@ -1,0 +1,9 @@
+###Get all post
+Get http://localhost:3000/post/all-post
+# ?tag=tag1&categoryId=1&&search=concac
+
+### get post by slug
+GET http://localhost:3000/post/test-slug-ahihi23
+
+### delete post
+Delete http://localhost:3000/post/delete/tao-caccac

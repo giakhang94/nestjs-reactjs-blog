@@ -7,4 +7,5 @@ export class CreatePostDto {
   content: string;
   category: string;
   tags: string;
+  slug?: string;
 }

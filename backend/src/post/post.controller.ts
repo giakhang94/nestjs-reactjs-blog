@@ -2,8 +2,11 @@ import {
   Body,
   Controller,
   Delete,
+  Get,
   Param,
+  Patch,
   Post,
+  Query,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -15,6 +18,7 @@ import { UserPayload } from 'src/types';
 import { JwtGuard } from 'src/auth/guards/Jwt.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ImageValidationPipe } from 'src/pipes/image-validation.pipe';
+import { EditPostDto } from './dtos/edit-post.dto';
 
 @Controller('post')
 export class PostController {
@@ -29,5 +33,35 @@ export class PostController {
     @UploadedFile(new ImageValidationPipe()) file: Express.Multer.File,
   ) {
     return this.postService.createPost(body, user, file);
+  }
+
+  @Get('all-post')
+  getAllPosts(
+    @Query('search') search: string,
+    @Query('categoryId') categoryId: string,
+    @Query('tag') tag: string,
+  ) {
+    return this.postService.getAllPosts(search, Number(categoryId), tag);
+  }
+
+  @Get(':slug')
+  getPostBySlug(@Param('slug') slug: string) {
+    return this.postService.getPostBySlug(slug);
+  }
+
+  @Delete('delete/:slug')
+  @UseGuards(JwtGuard)
+  deletePost(@Param('slug') slug: string, @GetCurrentUser() user: UserPayload) {
+    return this.postService.deletePost(slug, user);
+  }
+
+  @Patch('edit/:slug')
+  @UseGuards(JwtGuard)
+  editPost(
+    @Body() body: EditPostDto,
+    @Param('slug') slug: string,
+    @GetCurrentUser() user: UserPayload,
+  ) {
+    return this.postService.editPost(slug, body, user);
   }
 }
