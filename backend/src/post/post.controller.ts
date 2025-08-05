@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  Patch,
   Post,
   Query,
   UploadedFile,
@@ -17,6 +18,7 @@ import { UserPayload } from 'src/types';
 import { JwtGuard } from 'src/auth/guards/Jwt.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ImageValidationPipe } from 'src/pipes/image-validation.pipe';
+import { EditPostDto } from './dtos/edit-post.dto';
 
 @Controller('post')
 export class PostController {
@@ -49,7 +51,17 @@ export class PostController {
 
   @Delete('delete/:slug')
   @UseGuards(JwtGuard)
-  DeletePost(@Param('slug') slug: string, @GetCurrentUser() user: UserPayload) {
+  deletePost(@Param('slug') slug: string, @GetCurrentUser() user: UserPayload) {
     return this.postService.deletePost(slug, user);
+  }
+
+  @Patch('edit/:slug')
+  @UseGuards(JwtGuard)
+  editPost(
+    @Body() body: EditPostDto,
+    @Param('slug') slug: string,
+    @GetCurrentUser() user: UserPayload,
+  ) {
+    return this.postService.editPost(slug, body, user);
   }
 }

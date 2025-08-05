@@ -12,6 +12,7 @@ import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 import slugify from 'slugify';
 import { createUniqueSlug } from './helpers/create-unique-slug';
 import { Prisma } from '@prisma/client';
+import { EditPostDto } from './dtos/edit-post.dto';
 
 @Injectable()
 export class PostService {
@@ -149,5 +150,10 @@ export class PostService {
     if (post.userId !== user.userId && user.role !== 'admin')
       throw new ForbiddenException('You can not delete this post');
     return this.prisma.post.delete({ where: { slug } });
+  }
+
+  async editPost(currentSlug: string, body: EditPostDto, user: UserPayload) {
+    let slug = '';
+    if (body.slug) slug = await createUniqueSlug(body.slug, this.prisma);
   }
 }
