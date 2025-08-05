@@ -5,7 +5,7 @@ export class EditPostDto {
   status?: Status;
   preview_text?: string;
   content?: string;
-  category?: string;
+  cateId?: string;
   tags?: string;
   slug?: string;
 }

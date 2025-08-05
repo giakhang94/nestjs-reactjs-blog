@@ -13,6 +13,7 @@ import slugify from 'slugify';
 import { createUniqueSlug } from './helpers/create-unique-slug';
 import { Prisma } from '@prisma/client';
 import { EditPostDto } from './dtos/edit-post.dto';
+import { checkValidId } from 'src/users/helpers/checkValidId';
 
 @Injectable()
 export class PostService {
@@ -114,7 +115,10 @@ export class PostService {
     }
 
     return this.prisma.post.findMany({
-      include: { tags: true },
+      include: {
+        tags: { include: { tag: { select: { tag: true } } } },
+        category: true,
+      },
       where,
     });
 
@@ -139,7 +143,10 @@ export class PostService {
   }
 
   async getPostBySlug(slug: string) {
-    const post = await this.prisma.post.findUnique({ where: { slug } });
+    const post = await this.prisma.post.findUnique({
+      where: { slug },
+      include: { tags: { include: { tag: true } }, category: true },
+    });
     if (!post) throw new NotFoundException('post not found');
     return post;
   }
@@ -153,7 +160,80 @@ export class PostService {
   }
 
   async editPost(currentSlug: string, body: EditPostDto, user: UserPayload) {
+    const post = await this.prisma.post.findUnique({
+      where: { slug: currentSlug },
+      include: { tags: { include: { tag: true } }, category: true },
+    });
+    if (!post) throw new NotFoundException('Post not found');
+
+    //check valid cateId
+    let cateId: number;
+    if (body.cateId) {
+      cateId = checkValidId(body.cateId);
+      const cate = await this.prisma.category.findUnique({
+        where: { id: cateId },
+      });
+      if (!cate)
+        throw new BadRequestException('Please create this category first');
+    }
+
+    //unique slug
     let slug = '';
     if (body.slug) slug = await createUniqueSlug(body.slug, this.prisma);
+    //tags
+    const currentTags = post.tags.map((tag: any) => {
+      return tag.tag;
+    });
+    const newTags = body.tags as any;
+
+    try {
+      const updatePost = await this.prisma.$transaction(async (transaction) => {
+        //add and connect new tags to the post
+        await Promise.all(
+          newTags.map(async (tag: string) => {
+            if (!currentTags.includes(tag)) {
+              const newTagRecord = await transaction.tag.upsert({
+                where: { tag: tag },
+                update: {},
+                create: { tag: tag },
+              });
+
+              //connect tag and post
+              await transaction.tagsOnPosts.upsert({
+                where: {
+                  postId_tagId: { postId: post.id, tagId: newTagRecord.id },
+                },
+                update: {},
+                create: { tagId: newTagRecord.id, postId: post.id },
+              });
+            }
+          }),
+        );
+
+        // remove (disconnect) tags
+        await Promise.all(
+          currentTags.map(async (tag: any) => {
+            if (!newTags.includes(tag.tag)) {
+              await transaction.tagsOnPosts.delete({
+                where: {
+                  postId_tagId: {
+                    postId: post.id,
+                    tagId: tag.id,
+                  },
+                },
+              });
+            }
+          }),
+        );
+        await transaction.post.update({
+          where: { slug: currentSlug },
+          data: { ...body, slug: slug, tags: undefined, cateId },
+        });
+      });
+
+      return updatePost;
+    } catch (error) {
+      console.log(error);
+    }
   }
 }
