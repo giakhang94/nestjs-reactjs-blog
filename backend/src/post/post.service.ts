@@ -14,6 +14,7 @@ import { createUniqueSlug } from './helpers/create-unique-slug';
 import { Prisma } from '@prisma/client';
 import { EditPostDto } from './dtos/edit-post.dto';
 import { checkValidId } from 'src/users/helpers/checkValidId';
+import { equals } from 'class-validator';
 
 @Injectable()
 export class PostService {
@@ -235,5 +236,35 @@ export class PostService {
     } catch (error) {
       console.log(error);
     }
+  }
+
+  async getPostByUser(
+    _userId: string,
+    search: string,
+    tag: string,
+    categoryId: string,
+  ) {
+    console.log(typeof _userId);
+    const userId = checkValidId(_userId);
+    const existingUser = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+    if (!existingUser) throw new NotFoundException('User not found');
+
+    const where = { userId: userId };
+    if (search) {
+      where['OR'] = [{ title: { search } }, { content: { search } }];
+    }
+    if (categoryId) {
+      const cateId = checkValidId(categoryId);
+      where['cateId'] = cateId;
+    }
+    if (tag) {
+      where['tags'] = { some: { tag: { tag: { equals: tag } } } };
+    }
+    return await this.prisma.post.findMany({
+      where,
+      include: { tags: true, category: true, thumbnail: true },
+    });
   }
 }

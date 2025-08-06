@@ -64,4 +64,14 @@ export class PostController {
   ) {
     return this.postService.editPost(slug, body, user);
   }
+
+  @Get('user/:userId')
+  getPostByUserId(
+    @Param('userId') userId: string,
+    @Query('search') search: string,
+    @Query('tag') tag: string,
+    @Query('categoryId') categoryId: string,
+  ) {
+    return this.postService.getPostByUser(userId, search, tag, categoryId);
+  }
 }
