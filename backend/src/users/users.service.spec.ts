@@ -65,6 +65,15 @@ describe('UsersService', () => {
         }),
       });
     });
+    it('should not concat when displayName is provided', async () => {
+      mockUser.displayName = 'displayName_mock';
+      await service.createUser(mockUser as CreateUserDto);
+      expect(prisma.user.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          displayName: 'displayName_mock',
+        }),
+      });
+    });
     it('should hash the password correctly and return the correct User data', async () => {
       let mockHashedPassword = 'hashed Password';
       let mockResultUser = { email: 'mock_email', password: 'hashedPw' };
