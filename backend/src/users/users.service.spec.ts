@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dtos/create-user.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 jest.mock('src/utils/hassPassword', () => {
   return {
     hashPw: jest.fn(),
@@ -34,7 +34,7 @@ describe('UsersService', () => {
     expect(service).toBeDefined();
   });
 
-  describe.only('createUser', () => {
+  describe('createUser', () => {
     let mockUser: Partial<CreateUserDto>;
     beforeEach(() => {
       mockUser = {
@@ -88,6 +88,38 @@ describe('UsersService', () => {
         }),
       });
       expect(user).toBeDefined();
+    });
+  });
+
+  //find user by id
+  describe.only('findUserByid', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+    it('should throw a BadRequestException when id is missing', async () => {
+      await expect(service.findUserById(0)).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('should throw a NotFoundException when can not find user by provided id ', async () => {
+      prisma.user.findUnique.mockResolvedValue(null);
+      await expect(service.findUserById(1)).rejects.toThrow(NotFoundException);
+    });
+
+    it('should return the user when everything is fine', async () => {
+      let mockUser = {
+        id: 12,
+        email: 'mock_email@email.com',
+        password: 'hashed pw',
+        firstName: 'Goku',
+        lastName: 'Kakarot',
+        role: 'author',
+      };
+      prisma.user.findUnique.mockResolvedValue(mockUser);
+      const user = await service.findUserById(12);
+      expect(user).toBeDefined();
+      expect(user).toEqual(mockUser);
     });
   });
 });
