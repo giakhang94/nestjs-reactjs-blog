@@ -2,17 +2,24 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dtos/create-user.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 jest.mock('src/utils/hassPassword', () => {
   return {
     hashPw: jest.fn(),
   };
 });
 import * as passwordUtils from 'src/utils/hassPassword';
+import { Role, Role_filter, UserPayload } from 'src/types';
 
 describe('UsersService', () => {
   let service: UsersService;
-  let prisma: { user: { create: any; findUnique: any } };
+  let prisma: {
+    user: { create: any; findUnique: any; findMany: any; count: any };
+  };
   let mockUser = {
     id: 12,
     email: 'mock_email@email.com',
@@ -26,6 +33,8 @@ describe('UsersService', () => {
       user: {
         create: jest.fn(),
         findUnique: jest.fn(),
+        findMany: jest.fn(),
+        count: jest.fn(),
       },
     };
     const module: TestingModule = await Test.createTestingModule({
@@ -120,7 +129,7 @@ describe('UsersService', () => {
     });
   });
   //findUserByEmail
-  describe.only('findUserByEmail', () => {
+  describe('findUserByEmail', () => {
     beforeEach(() => {
       jest.clearAllMocks();
     });
@@ -138,6 +147,70 @@ describe('UsersService', () => {
       const user = await service.findUserByEmail('whatever');
       expect(user).toBeDefined();
       expect(user).toEqual(mockUser);
+    });
+  });
+
+  describe.only('getAllUser', () => {
+    let mockUser: Partial<UserPayload>;
+    let limit: number;
+    let page: number;
+    let search: string;
+    let filter: Role_filter;
+    beforeEach(() => {
+      mockUser = {
+        userId: 1,
+        role: Role.admin,
+      };
+      limit = 3;
+      page = 1;
+      ((search = ''), (filter = Role_filter.all));
+
+      jest.clearAllMocks();
+    });
+    it('should throw a ForbiddenException if user is not the admin', async () => {
+      mockUser.role = Role.author;
+      expect(
+        service.getAllUsers(
+          mockUser as UserPayload,
+          limit,
+          page,
+          search,
+          filter,
+        ),
+      ).rejects.toThrow(ForbiddenException);
+    });
+    it('should throw a BadRequestException if filter gets an unexpected value', async () => {
+      filter = 'tao' as any;
+      await expect(
+        service.getAllUsers(
+          mockUser as UserPayload,
+          limit,
+          page,
+          search,
+          filter,
+        ),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should find all related users and return a correct value', async () => {
+      let mockResultValue = [mockUser];
+      let count = 5;
+      prisma.user.count.mockResolvedValue(count);
+      prisma.user.findMany.mockResolvedValue(mockResultValue);
+      const expectedTotalPages = Math.ceil(count / limit);
+      const result = await service.getAllUsers(
+        mockUser as UserPayload,
+        limit,
+        page,
+        search,
+        filter,
+      );
+
+      expect(result).toBeDefined();
+      expect(result).toEqual({
+        result: mockResultValue,
+        totalPages: expectedTotalPages,
+      });
     });
   });
 });
