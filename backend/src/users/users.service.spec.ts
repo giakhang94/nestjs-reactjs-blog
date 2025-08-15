@@ -9,13 +9,18 @@ jest.mock('src/utils/hassPassword', () => {
   };
 });
 import * as passwordUtils from 'src/utils/hassPassword';
-import { first } from 'rxjs';
-import { User } from 'generated/prisma';
 
 describe('UsersService', () => {
   let service: UsersService;
   let prisma: { user: { create: any; findUnique: any } };
-
+  let mockUser = {
+    id: 12,
+    email: 'mock_email@email.com',
+    password: 'hashed pw',
+    firstName: 'Goku',
+    lastName: 'Kakarot',
+    role: 'author',
+  };
   beforeEach(async () => {
     prisma = {
       user: {
@@ -92,7 +97,7 @@ describe('UsersService', () => {
   });
 
   //find user by id
-  describe.only('findUserByid', () => {
+  describe('findUserByid', () => {
     beforeEach(() => {
       jest.clearAllMocks();
     });
@@ -108,16 +113,29 @@ describe('UsersService', () => {
     });
 
     it('should return the user when everything is fine', async () => {
-      let mockUser = {
-        id: 12,
-        email: 'mock_email@email.com',
-        password: 'hashed pw',
-        firstName: 'Goku',
-        lastName: 'Kakarot',
-        role: 'author',
-      };
       prisma.user.findUnique.mockResolvedValue(mockUser);
       const user = await service.findUserById(12);
+      expect(user).toBeDefined();
+      expect(user).toEqual(mockUser);
+    });
+  });
+  //findUserByEmail
+  describe.only('findUserByEmail', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+    it('should throw a BadRequestException when email is not provided', async () => {
+      expect(service.findUserByEmail('')).rejects.toThrow(BadRequestException);
+    });
+    it('should throw a NotFoundException when there is no user matches this email', async () => {
+      prisma.user.findUnique.mockResolvedValue(null);
+      expect(service.findUserByEmail('test@gmail.com')).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+    it('should return a user when everything is OK', async () => {
+      prisma.user.findUnique.mockResolvedValue(mockUser);
+      const user = await service.findUserByEmail('whatever');
       expect(user).toBeDefined();
       expect(user).toEqual(mockUser);
     });
