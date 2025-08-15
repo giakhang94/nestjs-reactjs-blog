@@ -26,6 +26,7 @@ describe('UsersService', () => {
       findMany: any;
       count: any;
       update: any;
+      delete: any;
     };
   };
   let mockUserPayload = {
@@ -48,6 +49,7 @@ describe('UsersService', () => {
         findMany: jest.fn(),
         count: jest.fn(),
         update: jest.fn(),
+        delete: jest.fn(),
       },
     };
     const module: TestingModule = await Test.createTestingModule({
@@ -227,7 +229,7 @@ describe('UsersService', () => {
     });
   });
   //update user
-  describe.only('updateUser', () => {
+  describe('updateUser', () => {
     let mockBody: UpdateUserDto;
     beforeEach(() => {
       mockBody = { email: 'mockEmail' } as UpdateUserDto;
@@ -266,6 +268,38 @@ describe('UsersService', () => {
 
       expect(user).toBeDefined();
       expect(user).toEqual({ ...mockUser, email: mockBody.email });
+    });
+  });
+  //delete user
+  describe.only('deleteUser', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+    it('should throw a BadRequestException when provided id can not convert to number', async () => {
+      expect(
+        service.deleteUser(mockUserPayload as UserPayload, 'tao'),
+      ).rejects.toThrow(BadRequestException);
+    });
+    it("should throw a ForbiddenException when you are not admin and trying to delete other' account", async () => {
+      expect(
+        service.deleteUser(mockUserPayload as UserPayload, '123'),
+      ).rejects.toThrow(ForbiddenException);
+    });
+    it('should throw a NotFoundException when there is no user matches the provided id', async () => {
+      prisma.user.findUnique.mockResolvedValue(null);
+      expect(
+        service.deleteUser(mockUserPayload as UserPayload, '1333'),
+      ).rejects.toThrow(NotFoundException);
+    });
+    it('should delete the user and return a properly value', async () => {
+      prisma.user.delete.mockResolvedValue(mockUser);
+      prisma.user.findUnique.mockResolvedValue(mockUser);
+      const result = await service.deleteUser(
+        mockUserPayload as UserPayload,
+        '1333',
+      );
+      expect(result).toBeDefined();
+      expect(result).toEqual(mockUser);
     });
   });
 });
