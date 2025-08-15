@@ -149,7 +149,7 @@ describe('AuthService', () => {
     });
   });
 
-  describe.only('refresh token', () => {
+  describe('refresh token', () => {
     beforeEach(() => {
       resMock = { cookie: jest.fn() } as any;
 
