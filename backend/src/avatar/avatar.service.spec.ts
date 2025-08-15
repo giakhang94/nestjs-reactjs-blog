@@ -21,6 +21,10 @@ describe('AvatarService', () => {
 
   beforeEach(async () => {
     prisma = {
+      //cb tương ứng với nguyên cái callback truyền vào $transaction(async cb ...)
+      //còn cb({avatar: {...}}), thì đối số truyên vào tương ứng với tx (transaction) bên code thực tế
+      //còn lại là cách prisma được lập trình, sau này giỏi lên rồi tìm hiểu lại
+      //giờ tìm hiểu xong muốn khùng
       $transaction: jest.fn(async (cb) => {
         return cb({
           avatar: {
