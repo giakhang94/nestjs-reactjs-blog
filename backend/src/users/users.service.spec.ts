@@ -4,6 +4,7 @@ import { CreateUserDto } from './dtos/create-user.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import {
   BadRequestException,
+  Body,
   ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
@@ -14,14 +15,25 @@ jest.mock('src/utils/hassPassword', () => {
 });
 import * as passwordUtils from 'src/utils/hassPassword';
 import { Role, Role_filter, UserPayload } from 'src/types';
+import { UpdateUserDto } from './dtos/update-user.dto';
 
 describe('UsersService', () => {
   let service: UsersService;
   let prisma: {
-    user: { create: any; findUnique: any; findMany: any; count: any };
+    user: {
+      create: any;
+      findUnique: any;
+      findMany: any;
+      count: any;
+      update: any;
+    };
+  };
+  let mockUserPayload = {
+    userId: 1333,
+    role: Role.author,
   };
   let mockUser = {
-    id: 12,
+    id: 1333,
     email: 'mock_email@email.com',
     password: 'hashed pw',
     firstName: 'Goku',
@@ -35,6 +47,7 @@ describe('UsersService', () => {
         findUnique: jest.fn(),
         findMany: jest.fn(),
         count: jest.fn(),
+        update: jest.fn(),
       },
     };
     const module: TestingModule = await Test.createTestingModule({
@@ -149,8 +162,8 @@ describe('UsersService', () => {
       expect(user).toEqual(mockUser);
     });
   });
-
-  describe.only('getAllUser', () => {
+  //get all users
+  describe('getAllUser', () => {
     let mockUser: Partial<UserPayload>;
     let limit: number;
     let page: number;
@@ -211,6 +224,48 @@ describe('UsersService', () => {
         result: mockResultValue,
         totalPages: expectedTotalPages,
       });
+    });
+  });
+  //update user
+  describe.only('updateUser', () => {
+    let mockBody: UpdateUserDto;
+    beforeEach(() => {
+      mockBody = { email: 'mockEmail' } as UpdateUserDto;
+      jest.clearAllMocks();
+    });
+    it('should throw a BadRequestException when provided id can not convert to number', async () => {
+      await expect(
+        service.updateUser(mockUserPayload as UserPayload, 'tao', mockBody),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it("should throw a ForbiddenException when user try to edit other's profile and he is not an admin", async () => {
+      await expect(
+        service.updateUser(mockUserPayload as UserPayload, '1', mockBody),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('should throw a NotFoundException when user do not exist', async () => {
+      prisma.user.findUnique.mockResolvedValue(null);
+      await expect(
+        service.updateUser(mockUserPayload as UserPayload, '1333', mockBody),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should return the updated user correctly', async () => {
+      prisma.user.findUnique.mockResolvedValue(mockUser);
+      prisma.user.update.mockResolvedValue({
+        ...mockUser,
+        email: mockBody.email,
+      });
+      const user = await service.updateUser(
+        mockUserPayload as UserPayload,
+        '1333',
+        mockBody,
+      );
+
+      expect(user).toBeDefined();
+      expect(user).toEqual({ ...mockUser, email: mockBody.email });
     });
   });
 });
