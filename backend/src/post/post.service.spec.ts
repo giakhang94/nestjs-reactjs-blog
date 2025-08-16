@@ -259,7 +259,11 @@ describe('PostService', () => {
 
     it('should update post correctly', async () => {
       body.tags = ['tag3', 'tag4'] as any;
-      let currentTags = [{ tag: 'tag1' }, { tag: 'tag2' }, { tag: 'tag3' }];
+      let currentTags = [
+        { tag: 'tag1', id: 1 },
+        { tag: 'tag2', id: 2 },
+        { tag: 'tag3', id: 3 },
+      ];
       let currentTagArr = currentTags.map((tag: any) => {
         return tag.tag;
       });
