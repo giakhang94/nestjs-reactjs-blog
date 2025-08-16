@@ -22,6 +22,7 @@ describe('PostService', () => {
     $transaction: ({ tx }: any) => any;
     post: { findMany: any; update: any; findUnique: any };
     category?: { findUnique: any };
+    user: { findUnique: any };
   };
   let mockTagUpsert = jest.fn();
   let mockTagsOnPostUpsert = jest.fn();
@@ -54,6 +55,9 @@ describe('PostService', () => {
       category: {
         findUnique: jest.fn(),
       },
+      user: {
+        findUnique: jest.fn(),
+      },
     };
 
     mockUserPayload = { userId: 1, role: Role.author } as UserPayload;
@@ -66,6 +70,8 @@ describe('PostService', () => {
     }).compile();
 
     service = module.get<PostService>(PostService);
+
+    jest.clearAllMocks();
   });
 
   it('should be defined', () => {
@@ -225,7 +231,7 @@ describe('PostService', () => {
     });
   });
   //update post
-  describe.only('updatePost', () => {
+  describe('updatePost', () => {
     let body: EditPostDto;
     let currentSlug: string;
     beforeEach(() => {
@@ -304,6 +310,70 @@ describe('PostService', () => {
       const result = await service.editPost(currentSlug, body, mockUserPayload);
       expect(mockTagPostUpsert).toHaveBeenCalledTimes(countNewTag);
       expect(mockTagPostDelete).toHaveBeenCalledTimes(countRemoveTag);
+    });
+  });
+  //get posts by user
+  describe.only('getPostsByUser', () => {
+    beforeEach(() => {
+      prisma.user.findUnique.mockResolvedValue({ id: 1 });
+      // prisma.post.findMany.mockResolvedValue([]);
+      jest.clearAllMocks();
+    });
+    it('should throw a BadRequestException when _userId can not convert to number', async () => {
+      expect(
+        service.getPostByUser('tao', 'search', 'tag', '1'),
+      ).rejects.toThrow(BadRequestException);
+    });
+    it('should throw a NotFoundException when user with provided id do not exist', async () => {
+      prisma.user.findUnique.mockResolvedValue(null);
+      expect(service.getPostByUser('1', 'search', 'tag', '2')).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+    it('should throw new BadRequestException when cateId cannot convert to number', async () => {
+      // prisma.user.findUnique.mockResolvedValue({ id: 1 });
+      expect(
+        service.getPostByUser('1', 'search', 'tag1', 'tao tao'),
+      ).rejects.toThrow(BadRequestException);
+    });
+    it('should always contain userId and ignore search in where object', async () => {
+      await service.getPostByUser('1', '', 'tag1', '3');
+
+      expect(prisma.post.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ userId: 1 }),
+        }),
+      );
+      expect(prisma.post.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.not.objectContaining({
+            search: expect.any(String),
+          }),
+        }),
+      );
+    });
+
+    it('should contain userid and search, and ignore tag in where object', async () => {
+      await service.getPostByUser('1', 'search', '', '3');
+      expect(prisma.post.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            userId: 1,
+            cateId: 3,
+            OR: [
+              { title: { search: 'search' } },
+              { content: { search: 'search' } },
+            ],
+          }),
+        }),
+      );
+      expect(prisma.post.findMany).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          where: expect.not.objectContaining({
+            tag: expect.any(Object),
+          }),
+        }),
+      );
     });
   });
 });
