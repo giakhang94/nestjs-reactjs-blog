@@ -11,12 +11,20 @@ jest.mock('./helpers/create-unique-slug', () => {
 import * as createUniqueSlug from './helpers/create-unique-slug';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { EditPostDto } from './dtos/edit-post.dto';
 
 describe('PostService', () => {
+  let mockUserPayload: UserPayload;
   let service: PostService;
   let cloudinary: { uploadFile: any; deleteFile: any };
-  let prisma: { $transaction: ({ tx }: any) => any; post: { findMany: any } };
+  let prisma: {
+    $transaction: ({ tx }: any) => any;
+    post: { findMany: any; update: any; findUnique: any };
+    category?: { findUnique: any };
+  };
+  let mockTagUpsert = jest.fn();
+  let mockTagsOnPostUpsert = jest.fn();
   beforeEach(async () => {
     cloudinary = {
       uploadFile: jest.fn(),
@@ -30,13 +38,25 @@ describe('PostService', () => {
             create: jest.fn(),
             findMany: jest.fn(),
           },
+          tag: {
+            upsert: jest.fn(),
+          },
+          tagsOnPosts: {
+            upsert: jest.fn(),
+          },
         });
       }),
       post: {
         findMany: jest.fn(),
+        update: jest.fn(),
+        findUnique: jest.fn(),
+      },
+      category: {
+        findUnique: jest.fn(),
       },
     };
 
+    mockUserPayload = { userId: 1, role: Role.author } as UserPayload;
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         PostService,
@@ -130,7 +150,7 @@ describe('PostService', () => {
     });
   });
   //get all posts
-  describe.only('getAllPosts', () => {
+  describe('getAllPosts', () => {
     let mockSearch: string;
     let mockCategoryId: number;
     let tag: string;
@@ -202,6 +222,84 @@ describe('PostService', () => {
       expect(prisma.post.findMany).toHaveBeenCalledWith(
         expect.objectContaining({ where: {} }),
       );
+    });
+  });
+  //update post
+  describe.only('updatePost', () => {
+    let body: EditPostDto;
+    let currentSlug: string;
+    beforeEach(() => {
+      body = { title: 'test mock title', cateId: '220' };
+      currentSlug = 'test-mock-title-1';
+      prisma.post.findUnique.mockResolvedValue({ id: 2 });
+      prisma.category?.findUnique.mockResolvedValue({ id: 1 });
+      jest.clearAllMocks();
+    });
+    it('should throw new a NotFoundException if post with provided id is not found', async () => {
+      prisma.post.findUnique.mockResolvedValue(null);
+      expect(
+        service.editPost(currentSlug, body, mockUserPayload),
+      ).rejects.toThrow(NotFoundException);
+    });
+    it('should throw new BadRequestException when provided category have not created yet', async () => {
+      prisma.category?.findUnique.mockResolvedValue(null);
+      prisma.post.findUnique.mockResolvedValue({ id: 2 });
+      expect(
+        service.editPost(currentSlug, body, mockUserPayload),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should create a new unique slug precisely when body.slug is provided', async () => {
+      body.slug = 'test-update-mock-create-new-unique-slug';
+      let mockNewSlug = body.slug + 1;
+      (createUniqueSlug.createUniqueSlug as jest.Mock).mockResolvedValue(
+        mockNewSlug,
+      );
+    });
+
+    it('should update post correctly', async () => {
+      body.tags = ['tag3', 'tag4'] as any;
+      let currentTags = [{ tag: 'tag1' }, { tag: 'tag2' }, { tag: 'tag3' }];
+      let currentTagArr = currentTags.map((tag: any) => {
+        return tag.tag;
+      });
+      let mockTagUpsert = jest
+        .fn()
+        .mockResolvedValue({ id: Math.ceil(Math.random() * 100) });
+      let mockTagPostUpsert = jest.fn();
+      let mockTagPostDelete = jest.fn();
+      let mockPostUpdate = jest.fn();
+      (prisma.$transaction as jest.Mock).mockImplementation(async (cb: any) => {
+        return cb({
+          tag: {
+            upsert: mockTagUpsert,
+          },
+          tagsOnPosts: {
+            upsert: mockTagPostUpsert,
+            delete: mockTagPostDelete,
+          },
+          post: {
+            update: mockPostUpdate,
+          },
+        });
+      });
+      prisma.post.findUnique.mockResolvedValue({
+        tags: currentTags,
+        id: 1,
+      });
+      let countNewTag = 0;
+      let countRemoveTag = 0;
+      (body.tags as any).map((tag: string) => {
+        if (currentTagArr.includes(tag)) countNewTag++;
+      });
+      currentTagArr.map((tag: any) => {
+        if (!body.tags!.includes(tag.tag)) {
+          countRemoveTag++;
+        }
+      });
+      const result = await service.editPost(currentSlug, body, mockUserPayload);
+      expect(mockTagPostUpsert).toHaveBeenCalledTimes(countNewTag);
+      expect(mockTagPostDelete).toHaveBeenCalledTimes(countRemoveTag);
     });
   });
 });

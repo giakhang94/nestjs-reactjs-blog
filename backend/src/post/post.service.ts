@@ -235,6 +235,7 @@ export class PostService {
       return updatePost;
     } catch (error) {
       console.log(error);
+      throw new BadRequestException('Can not update this post');
     }
   }
 
