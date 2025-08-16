@@ -16,7 +16,7 @@ import { BadRequestException } from '@nestjs/common';
 describe('PostService', () => {
   let service: PostService;
   let cloudinary: { uploadFile: any; deleteFile: any };
-  let prisma: { $transaction: ({ tx }: any) => any };
+  let prisma: { $transaction: ({ tx }: any) => any; post: { findMany: any } };
   beforeEach(async () => {
     cloudinary = {
       uploadFile: jest.fn(),
@@ -28,9 +28,13 @@ describe('PostService', () => {
         return cb({
           post: {
             create: jest.fn(),
+            findMany: jest.fn(),
           },
         });
       }),
+      post: {
+        findMany: jest.fn(),
+      },
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -48,7 +52,7 @@ describe('PostService', () => {
     expect(service).toBeDefined();
   });
   //create post
-  describe.only('createPost', () => {
+  describe('createPost', () => {
     let body: CreatePostDto;
     let mockUserPayload: UserPayload;
     let mockCreatePost;
@@ -123,6 +127,81 @@ describe('PostService', () => {
       // expect(cloudinary.deleteFile).toHaveBeenCalledWith('1235');
       expect(cloudinary.deleteFile).toHaveBeenCalledWith('1235');
       expect(cloudinary.deleteFile).toHaveBeenCalledTimes(1);
+    });
+  });
+  //get all posts
+  describe.only('getAllPosts', () => {
+    let mockSearch: string;
+    let mockCategoryId: number;
+    let tag: string;
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should contain OR clause in where object if search is not an empty string', async () => {
+      mockSearch = 'mock search';
+      const posts = await service.getAllPosts(
+        mockSearch,
+        null as any,
+        null as any,
+      );
+      expect(prisma.post.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            OR: [
+              { content: { search: mockSearch } },
+              { title: { search: mockSearch } },
+            ],
+          }),
+        }),
+      );
+    });
+
+    it('should contain tags query string in where object if tag is not empty', async () => {
+      tag = 'tag_mock';
+      const posts = await service.getAllPosts('tao', 1, tag);
+      expect(prisma.post.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            tags: {
+              some: {
+                tag: {
+                  tag: {
+                    equals: tag,
+                  },
+                },
+              },
+            },
+          }),
+        }),
+      );
+    });
+
+    it('should contain cateId query string in where object if categoryId is provided', async () => {
+      mockCategoryId = 2;
+      let mockResult = [{ id: 1 }, { id: 2 }];
+      prisma.post.findMany.mockResolvedValue(mockResult);
+      const posts = await service.getAllPosts('tao', mockCategoryId, tag);
+      expect(prisma.post.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            cateId: mockCategoryId,
+          }),
+        }),
+      );
+      expect(posts).toBeDefined();
+      expect(posts).toEqual(mockResult);
+    });
+
+    it('should find all post if there no param for query string', async () => {
+      const posts = await service.getAllPosts(
+        null as any,
+        null as any,
+        null as any,
+      );
+      expect(prisma.post.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: {} }),
+      );
     });
   });
 });
